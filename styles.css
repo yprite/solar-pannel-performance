@@ -29,13 +29,6 @@ body {
     background-color: #f0f0f0;
 }
 
-.selected-region {
-    stroke: #222; /* 기존 대비 강조 */
-    stroke-width: 2px;
-    fill-opacity: 0.8; /* 약간 더 진하게 */
-    transform: scale(1.02); /* 자연스럽게 살짝 확대 */
-    transition: transform 0.3s ease, fill-opacity 0.3s ease;
-}
 #tooltip {
     position: absolute;
     opacity: 0;

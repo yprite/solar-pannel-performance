@@ -19,7 +19,7 @@ var path = d3.geoPath().projection(projection);
 var g = svg.append("g");
 
 var colorScale = d3.scaleLinear()
-    .domain([3.5, 4.0, 4.5])  // 3.5~4.5 범위로 조정
+    .domain([3.7, 4.0, 4.3])  // 3.5~4.5 범위로 조정
     .range(["blue", "yellow", "red"]);  // 색상 차이를 더 강조
 
 g.selectAll(".region")
