@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대한민국 태양광 발전량 지도</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="korea.js"></script> <!-- 로컬 GeoJSON을 포함한 JS 파일 -->
+    <script src="solar-data.js"></script> <!-- solarData를 포함한 JS 파일 -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #container {
+            display: flex;
+            justify-content: center;
+        }
+        #map-container {
+            width: 800px;
+            height: 600px;
+            position: relative;
+        }
+        #region-list {
+            width: 250px;
+            height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-right: 20px;
+            text-align: left;
+        }
+        .region-item {
+            cursor: pointer;
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .region-item:hover {
+            background-color: #f0f0f0;
+        }
+        #tooltip {
+            position: absolute;
+            opacity: 0;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            pointer-events: none;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+            width: 350px;
+        }
+        .chart-container {
+            width: 300px;
+            height: 150px;
+        }
+    </style>
+</head>
+<body>
+    <h2>대한민국 지역별 태양광 발전량</h2>
+    <div id="container">
+        <div id="region-list">
+            <div class="region-item" onclick="resetZoom()"><strong>전체 보기</strong></div>
+        </div>
+        <div id="map-container">
+            <svg id="map"></svg>
+        </div>
+    </div>
+    <script>
+        function processData(solarArray) {
+            var solarDict = {};
+            solarArray.forEach(entry => {
+                solarDict[entry.Location] = entry;
+            });
+            return solarDict;
+        }
+
+        var processedSolarData = processData(solarData);
+
+        var width = 800, height = 600;
+        var svg = d3.select("#map")
+            .attr("width", width)
+            .attr("height", height);
+
+        var projection = d3.geoMercator().fitSize([width, height], geoJsonData);
+        var path = d3.geoPath().projection(projection);
+
+        var g = svg.append("g");
+
+        var colorScale = d3.scaleLinear()
+            .domain([1, 6])
+            .range(["blue", "red"]);
+
+        g.selectAll(".region")
+            .data(geoJsonData.features)
+            .enter().append("path")
+            .attr("class", "region")
+            .attr("d", path)
+            .attr("fill", function(d) {
+                var regionName = d.properties.adm_nm;
+                return processedSolarData[regionName] ? colorScale(d3.mean(Object.values(processedSolarData[regionName]).slice(0, 12))) : "#f0f0f0";
+            })
+            .on("click", function(event, d) {
+                var regionName = d.properties.adm_nm;
+                var bounds = path.bounds(d);
+                var dx = bounds[1][0] - bounds[0][0];
+                var dy = bounds[1][1] - bounds[0][1];
+                var x = (bounds[0][0] + bounds[1][0]) / 2;
+                var y = (bounds[0][1] + bounds[1][1]) / 2;
+                var scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height)));
+                var translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+                );
+
+                if (processedSolarData[regionName]) {
+                    var solarValues = Object.values(processedSolarData[regionName]).slice(0, 12).map(Number);
+                    var avgValue = (solarValues.reduce((a, b) => a + b, 0) / solarValues.length).toFixed(2);
+                    var months = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+                    var chartHtml = `<svg width='300' height='150'>`;
+                    solarValues.forEach((val, i) => {
+                        chartHtml += `<rect x='${i * 25}' y='${150 - val * 20}' width='20' height='${val * 20}' fill='steelblue'></rect>`;
+                    });
+                    chartHtml += `</svg>`;
+                    d3.select("#tooltip").style("opacity", 1)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 10) + "px")
+                        .html(`<strong>${regionName} (2024년 기준)</strong><br> 평균 발전량: ${avgValue} kWh/m²/day <br>` + chartHtml);
+                }
+            });
+
+        var zoom = d3.zoom()
+            .scaleExtent([1, 8])
+            .on("zoom", function(event) {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        function resetZoom() {
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity
+            );
+            d3.select("#tooltip").style("opacity", 0);
+        }
+
+        var regionList = d3.select("#region-list");
+        geoJsonData.features.forEach(feature => {
+            regionList.append("div")
+                .attr("class", "region-item")
+                .text(feature.properties.adm_nm)
+                .on("click", function() {
+                    var event = new Event("click");
+                    d3.selectAll(".region").filter(d => d.properties.adm_nm === feature.properties.adm_nm).dispatch("click", { detail: event });
+                });
+        });
+    </script>
+    <div id="tooltip"></div>
+</body>
+</html>
