@@ -1,0 +1,82 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+#container {
+    display: flex;
+    justify-content: center;
+}
+#map-container {
+    width: 800px;
+    height: 600px;
+    position: relative;
+}
+#region-list {
+    width: 250px;
+    height: 600px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-right: 20px;
+    text-align: left;
+}
+.region-item {
+    cursor: pointer;
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+}
+.region-item:hover {
+    background-color: #f0f0f0;
+}
+
+.selected-region {
+    stroke: #222; /* 기존 대비 강조 */
+    stroke-width: 2px;
+    fill-opacity: 0.8; /* 약간 더 진하게 */
+    transform: scale(1.02); /* 자연스럽게 살짝 확대 */
+    transition: transform 0.3s ease, fill-opacity 0.3s ease;
+}
+#tooltip {
+    position: absolute;
+    opacity: 0;
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #ccc;
+    pointer-events: none;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+    width: 350px;
+    right: 10px;
+    top: 10px;
+}
+
+#info-box {
+    position: absolute;
+    top: 25%;
+    right: 10px;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    text-align: left;
+    width: 250px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+}
+
+.legend {
+    margin-top: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    margin-right: 5px;
+    border: 1px solid #000;
+}
